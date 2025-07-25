@@ -1,0 +1,119 @@
+{
+  "name": "TP Sécurité Web - Documentation",
+  "description": "API de démonstration des vulnérabilités web avec vulnérabilités NoSQL, LFI et JWT",
+  "logo": {
+    "light": "/images/security.png",
+    "dark": "/images/security.png"
+  },
+  "favicon": {
+    "light": "images/virus.png",
+    "dark": "/images/virus.png"
+  },
+  "theme": {
+    "primaryColor": "#dc3545",
+    "accentColor": "#c82333",
+    "backgroundColor": "#ffffff",
+    "textColor": "#1a202c"
+  },
+  "social": {
+    "website": "https://tp-securite-khelifa.francecentral.cloudapp.azure.com"
+  },
+  "footer": {
+    "text": "TP Sécurité Web © 2025 - Projet Éducatif de Cybersécurité",
+    "links": [
+      {
+        "text": "API Live",
+        "href": "https://tp-securite-khelifa.francecentral.cloudapp.azure.com"
+      },
+      {
+        "text": "Documentation Swagger",
+        "href": "https://tp-securite-khelifa.francecentral.cloudapp.azure.com/api"
+      },
+      {
+        "text": "OWASP Top 10",
+        "href": "https://owasp.org/www-project-top-ten/"
+      },
+      {
+        "text": "JWT Security",
+        "href": "https://jwt.io"
+      }
+    ]
+  },
+  "sidebar": [
+    {
+      "group": "🚀 Introduction",
+      "pages": [
+        {
+          "title": "Vue d'ensemble",
+          "href": "/",
+          "icon": "shield-alert",
+          "description": "Introduction au TP Sécurité Web et objectifs pédagogiques"
+        }
+      ]
+    }
+  ],
+  "search": {
+    "enabled": true,
+    "placeholder": "Rechercher dans la documentation de sécurité...",
+    "docsearch": {
+      "appId": "YOUR_ALGOLIA_APP_ID",
+      "apiKey": "YOUR_ALGOLIA_SEARCH_KEY", 
+      "indexName": "tp-securite-docs"
+    }
+  },
+  "analytics": {
+    "gtag": "G-XXXXXXXXXX"
+  },
+  "seo": {
+    "title": "TP Sécurité Web - Documentation Technique",
+    "description": "Documentation complète du TP Sécurité Web : vulnérabilités NoSQL, LFI, JWT avec exemples d'exploitation et remédiations.",
+    "keywords": ["sécurité web", "nosql injection", "lfi", "jwt", "cybersécurité", "pentest", "owasp", "mongodb", "express", "nodejs"],
+    "ogImage": "https://i.postimg.cc/og-security-docs.png",
+    "twitterCard": "summary_large_image"
+  },
+  "features": {
+    "darkMode": true,
+    "codeHighlighting": true,
+    "tableOfContents": true,
+    "editOnGitHub": {
+      "enabled": true,
+      "baseUrl": "https://github.com/votre-repo/tp-securite-web"
+    },
+    "feedback": {
+      "enabled": true,
+      "title": "Cette page vous a-t-elle été utile pour comprendre la vulnérabilité ?",
+      "positiveText": "Oui, très claire",
+      "negativeText": "Non, besoin d'amélioration"
+    },
+    "lastUpdated": true,
+    "contributors": true
+  },
+  "customization": {
+    "css": "/assets/security-custom.css",
+    "favicon": "/assets/security-favicon.ico",
+    "appleTouchIcon": "/assets/security-apple-touch-icon.png"
+  },
+  "redirects": [
+    {
+      "from": "/nosql",
+      "to": "/nosql"
+    },
+    {
+      "from": "/lfi",
+      "to": "/vulnerabilities/lfi"
+    },
+    {
+      "from": "/jwt",
+      "to": "/vulnerabilities/jwt"
+    },
+    {
+      "from": "/setup",
+      "to": "/installation"
+    }
+  ],
+  "navigation": {
+    "breadcrumbs": true,
+    "nextPrevious": true,
+    "githubEditLink": true
+  }
+}

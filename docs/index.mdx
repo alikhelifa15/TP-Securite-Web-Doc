@@ -1,0 +1,266 @@
+# 🔓 TP Sécurité Web - API de Démonstration
+
+> **⚠️ ATTENTION** : Cette application contient volontairement des vulnérabilités à des fins pédagogiques uniquement !
+
+Bienvenue dans la documentation complète du **TP Sécurité Web**, une API Express hébergée sur **Azure VM** avec **HTTPS/Let's Encrypt** pour démontrer les principales vulnérabilités web et leurs remédiations.
+
+## 🌐 API Hébergée sur Azure
+
+<div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+  <h3 className="text-blue-800 font-semibold">🔗 Accès Direct à l'API</h3>
+  <div className="mt-3 space-y-3">
+    <div className="flex items-center space-x-2">
+      <span className="text-green-600">🔒</span>
+      <strong>API Principale :</strong>
+      <a href="https://tp-securite-khelifa.francecentral.cloudapp.azure.com" className="text-blue-600 hover:underline">
+        https://tp-securite-khelifa.francecentral.cloudapp.azure.com
+      </a>
+    </div>
+    <div className="flex items-center space-x-2">
+      <span className="text-blue-600">📚</span>
+      <strong>Documentation Interactive Swagger :</strong>
+      <a href="https://tp-securite-khelifa.francecentral.cloudapp.azure.com/api" className="text-blue-600 hover:underline">
+        /api
+      </a>
+    </div>
+    <div className="flex items-center space-x-2">
+      <span className="text-gray-600">ℹ️</span>
+      <span className="text-sm text-gray-600">HTTPS sécurisé avec certificat Let's Encrypt</span>
+    </div>
+  </div>
+</div>
+
+## 🎯 Comment Utiliser ce TP
+
+### 📱 Interface Swagger Recommandée
+
+L'interface Swagger UI est la méthode la plus simple pour tester les vulnérabilités :
+
+1. **Accédez à :** [https://tp-securite-khelifa.francecentral.cloudapp.azure.com/api](https://tp-securite-khelifa.francecentral.cloudapp.azure.com/api)
+2. **Créez un utilisateur** avec `/create-user`
+3. **Testez les vulnérabilités** (section `🚨 Endpoints vulnérables`)
+4. **Vérifiez les protections** (section `🛡️ Versions sécurisées`)
+
+<div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-3">
+  <h4 className="text-green-800 font-semibold">✨ Pourquoi Swagger UI ?</h4>
+  <ul className="mt-2 text-green-700 space-y-1">
+    <li>• <strong>Interface graphique</strong> - Pas de ligne de commande</li>
+    <li>• <strong>Exemples intégrés</strong> - Payloads prêts à tester</li>
+    <li>• <strong>Réponses formatées</strong> - JSON coloré et lisible</li>
+    <li>• <strong>Un clic = un test</strong> - Execution immédiate</li>
+  </ul>
+</div>
+
+---
+
+# 🚨 VULNÉRABILITÉS ÉTUDIÉES
+
+## 1. 🗃️ NoSQL Injection
+
+### Qu'est-ce que c'est ?
+L'injection NoSQL permet de manipuler les requêtes MongoDB en injectant des objets JavaScript malveillants au lieu de simples chaînes de caractères.
+
+### Comment tester avec Swagger ?
+
+**Étape 1 :** Allez sur `/vulnerable/login` dans Swagger
+**Étape 2 :** Cliquez sur `Try it out`
+**Étape 3 :** Utilisez ce payload pour bypasser l'authentification :
+
+```json
+{
+  "username": {"$ne": null},
+  "password": {"$ne": null}
+}
+```
+
+**Résultat :** Connexion réussie sans connaître les vrais identifiants !
+
+### Pourquoi ça marche ?
+
+Le code vulnérable accepte directement les objets :
+```javascript
+// ❌ VULNÉRABLE
+const user = await User.findOne({ 
+  username: username,    // Peut être un objet !
+  password: password     // {"$ne": null} = "différent de null"
+});
+```
+
+### Comment se protéger ?
+
+**Testez sur `/secure/login` :** Le même payload sera rejeté avec "Types de données invalides"
+
+```javascript
+// ✅ SÉCURISÉ
+if (typeof username !== 'string' || typeof password !== 'string') {
+  return res.status(400).json({ error: 'Types invalides' });
+}
+```
+
+---
+
+## 2. 📁 Local File Inclusion (LFI)
+
+### Qu'est-ce que c'est ?
+La LFI permet de lire des fichiers arbitraires sur le serveur en exploitant les paramètres de chemin de fichier.
+
+### Comment tester avec Swagger ?
+
+**Étape 1 :** Allez sur `/vulnerable/file` dans Swagger
+**Étape 2 :** Testez ces différents fichiers :
+
+| Fichier à tester | Résultat attendu |
+|-----------------|------------------|
+| `public.txt` | ✅ Fichier normal (autorisé) |
+| `secret.txt` | ⚠️ Fichier secret exposé |
+| `config.txt` | 🚨 Fichiers Configuration sensible |
+
+### Pourquoi ça marche ?
+
+Le code vulnérable ne valide pas les chemins :
+```javascript
+// ❌ VULNÉRABLE
+const filePath = path.join('./demo-files', file);
+const content = fs.readFileSync(filePath, 'utf8');
+```
+
+### Comment se protéger ?
+
+**Testez sur `/secure/file` :** Seul `public.txt` sera autorisé
+
+```javascript
+// ✅ SÉCURISÉ
+const ALLOWED_FILES = ['public.txt'];
+if (!ALLOWED_FILES.includes(file)) {
+  return res.status(403).json({ error: 'Fichier non autorisé' });
+}
+```
+
+---
+
+## 3. 🔑 JWT Vulnérable
+
+### Qu'est-ce que c'est ?
+Les vulnérabilités JWT incluent les secrets faibles et l'acceptation de l'algorithme "none" qui supprime la signature.
+
+### Comment tester avec Swagger ?
+
+**Étape 1 :** Générez un token sur `/vulnerable/jwt-login`
+```json
+{
+  "username": "admin",
+  "password": "secret123"
+}
+```
+
+**Étape 2 :** Testez un token sans signature sur `/vulnerable/jwt-verify`
+```json
+{
+  "token": "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6ImFkbWluIn0."
+}
+```
+
+**Résultat :** Token accepté sans vérification de signature !
+
+### Analyse du token
+
+Copiez le token généré et analysez-le sur [jwt.io](https://jwt.io) :
+- **Secret faible :** "secret" (facilement bruteforcé)
+- **Algorithme :** Peut être modifié en "none"
+
+### Comment se protéger ?
+
+**Testez sur `/secure/jwt-verify` :** Le token "none" sera rejeté
+
+```javascript
+// ✅ SÉCURISÉ
+const decoded = jwt.verify(token, STRONG_SECRET, { 
+  algorithms: ['HS256']  // HS256 uniquement !
+});
+```
+
+---
+
+# 📊 TABLEAU COMPARATIF
+
+| Vulnérabilité | Endpoint Vulnérable | Test Rapide | Endpoint Sécurisé | Protection |
+|---------------|-------------------|-------------|------------------|------------|
+| **NoSQL Injection** | `/vulnerable/login` | `{"username":{"$ne":null}}` | `/secure/login` | Validation des types |
+| **LFI** | `/vulnerable/file` | `?file=../../../etc/passwd` | `/secure/file` | Whitelist de fichiers |
+| **JWT** | `/vulnerable/jwt-verify` | Token avec `"alg":"none"` | `/secure/jwt-verify` | Algorithme strict |
+
+---
+
+# 🛡️ BONNES PRATIQUES APPRISES
+
+## ✅ Règles d'Or de la Sécurité
+
+1. **Validation stricte** : Vérifiez TOUJOURS les types de données
+2. **Principe de moindre privilège** : N'autorisez que le minimum nécessaire  
+3. **Defense in depth** : Plusieurs couches de protection
+4. **Fail secure** : En cas d'erreur, privilégiez la sécurité
+
+## 🔧 Techniques de Protection
+
+### NoSQL
+- Validation des types (`typeof === 'string'`)
+- Sanitisation des entrées
+- Utilisation de requêtes paramétrées
+
+### LFI  
+- Whitelist des fichiers autorisés
+- Validation des chemins
+- Blocage des caractères de traversal (`../`)
+
+### JWT
+- Secrets cryptographiquement forts (256+ bits)
+- Algorithmes spécifiques (`HS256` uniquement)
+- Validation complète (issuer, audience, expiration)
+
+---
+
+# ⚠️ AVERTISSEMENT ÉTHIQUE
+
+<div className="bg-red-50 border border-red-200 rounded-lg p-4 mt-6">
+  <h3 className="text-red-800 font-semibold">🚨 Utilisation Responsable Uniquement</h3>
+  <div className="mt-2 text-red-700">
+    <p><strong>✅ Autorisé :</strong></p>
+    <ul className="list-disc list-inside mt-1">
+      <li>Tests sur cette API de démonstration</li>
+      <li>Apprentissage en laboratoire contrôlé</li>
+      <li>Formation en cybersécurité</li>
+    </ul>
+    
+    <p className="mt-3"><strong>❌ Strictement Interdit :</strong></p>
+    <ul className="list-disc list-inside mt-1">
+      <li>Tests sur des systèmes sans autorisation écrite</li>
+      <li>Utilisation malveillante ou illégale</li>
+      <li>Attaques contre des infrastructures réelles</li>
+    </ul>
+    
+    <p className="mt-3 text-sm">
+      <strong>Rappel légal :</strong> Le piratage informatique sans autorisation est un délit passible d'amendes et d'emprisonnement.
+    </p>
+  </div>
+</div>
+
+---
+
+<div className="text-center mt-8">
+  <div className="space-y-4">
+    <h2 className="text-2xl font-bold text-gray-800">
+      🎓 Formation Complète en Sécurité Web
+    </h2>
+    <p className="text-gray-600">
+      API hébergée sur Azure • HTTPS sécurisé • Interface Swagger interactive
+    </p>
+    <div className="space-x-4">
+      <a href="https://tp-securite-khelifa.francecentral.cloudapp.azure.com/api" className="bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors inline-block text-lg font-semibold">
+        🚀 Commencer les Tests sur Swagger
+      </a>
+    </div>
+    <p className="text-sm text-gray-500 mt-4">
+      Prêt en 30 secondes • Aucune installation requise • Tests interactifs
+    </p>
+  </div>
+</div>
